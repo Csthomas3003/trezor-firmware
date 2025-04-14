@@ -302,6 +302,7 @@ if TYPE_CHECKING:
 
     class RefundMemo(protobuf.MessageType):
         address: "str"
+        address_n: "list[int]"
         mac: "bytes"
 
         def __init__(
@@ -309,6 +310,7 @@ if TYPE_CHECKING:
             *,
             address: "str",
             mac: "bytes",
+            address_n: "list[int] | None" = None,
         ) -> None:
             pass
 
@@ -320,6 +322,7 @@ if TYPE_CHECKING:
         coin_type: "int"
         amount: "str"
         address: "str"
+        address_n: "list[int]"
         mac: "bytes"
 
         def __init__(
@@ -329,6 +332,7 @@ if TYPE_CHECKING:
             amount: "str",
             address: "str",
             mac: "bytes",
+            address_n: "list[int] | None" = None,
         ) -> None:
             pass
 
