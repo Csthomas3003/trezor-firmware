@@ -1210,11 +1210,13 @@ if TYPE_CHECKING:
 
     class CardanoAddress(protobuf.MessageType):
         address: "str"
+        mac: "bytes | None"
 
         def __init__(
             self,
             *,
             address: "str",
+            mac: "bytes | None" = None,
         ) -> None:
             pass
 
@@ -5250,11 +5252,13 @@ if TYPE_CHECKING:
 
     class RippleAddress(protobuf.MessageType):
         address: "str"
+        mac: "bytes | None"
 
         def __init__(
             self,
             *,
             address: "str",
+            mac: "bytes | None" = None,
         ) -> None:
             pass
 
@@ -5372,11 +5376,13 @@ if TYPE_CHECKING:
 
     class SolanaAddress(protobuf.MessageType):
         address: "str"
+        mac: "bytes | None"
 
         def __init__(
             self,
             *,
             address: "str",
+            mac: "bytes | None" = None,
         ) -> None:
             pass
 
@@ -5490,11 +5496,13 @@ if TYPE_CHECKING:
 
     class StellarAddress(protobuf.MessageType):
         address: "str"
+        mac: "bytes | None"
 
         def __init__(
             self,
             *,
             address: "str",
+            mac: "bytes | None" = None,
         ) -> None:
             pass
 
@@ -5888,11 +5896,13 @@ if TYPE_CHECKING:
 
     class TezosAddress(protobuf.MessageType):
         address: "str"
+        mac: "bytes | None"
 
         def __init__(
             self,
             *,
             address: "str",
+            mac: "bytes | None" = None,
         ) -> None:
             pass
 
