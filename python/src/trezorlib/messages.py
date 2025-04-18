@@ -6853,6 +6853,7 @@ class RippleSignTx(protobuf.MessageType):
         5: protobuf.Field("last_ledger_sequence", "uint32", repeated=False, required=False, default=None),
         6: protobuf.Field("payment", "RipplePayment", repeated=False, required=True),
         7: protobuf.Field("chunkify", "bool", repeated=False, required=False, default=None),
+        8: protobuf.Field("payment_req", "PaymentRequest", repeated=False, required=False, default=None),
     }
 
     def __init__(
@@ -6865,6 +6866,7 @@ class RippleSignTx(protobuf.MessageType):
         flags: Optional["int"] = 0,
         last_ledger_sequence: Optional["int"] = None,
         chunkify: Optional["bool"] = None,
+        payment_req: Optional["PaymentRequest"] = None,
     ) -> None:
         self.address_n: Sequence["int"] = address_n if address_n is not None else []
         self.fee = fee
@@ -6873,6 +6875,7 @@ class RippleSignTx(protobuf.MessageType):
         self.flags = flags
         self.last_ledger_sequence = last_ledger_sequence
         self.chunkify = chunkify
+        self.payment_req = payment_req
 
 
 class RippleSignedTx(protobuf.MessageType):
