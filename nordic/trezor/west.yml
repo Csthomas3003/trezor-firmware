@@ -15,10 +15,8 @@ manifest:
       repo-path: sdk-nrf
       revision: v2.9.0
       import: true
-
-# Temporarily disable mcuboot fork until it's ready
-#    - name: mcuboot
-#      url: https://github.com/trezor/mcuboot
-#      revision: v2.1.0-ncs3
-#      path: bootloader/mcuboot
+    - name: mcuboot
+      url: https://github.com/trezor/mcuboot
+      revision: 4a2da68e712062f8c9076e8d9d2d2329f544cc4c # trezor-v2.1.0-ncs3
+      path: bootloader/mcuboot
 
