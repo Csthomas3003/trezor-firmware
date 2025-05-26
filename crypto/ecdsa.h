@@ -126,6 +126,13 @@ int ecdsa_recover_pub_from_sig(const ecdsa_curve *curve, uint8_t *pub_key,
                                int recid);
 int ecdsa_sig_to_der(const uint8_t *sig, uint8_t *der);
 int ecdsa_sig_from_der(const uint8_t *der, size_t der_len, uint8_t sig[64]);
+int ecdsa_mask_scalar(const ecdsa_curve *curve, const uint8_t *masking_key,
+                      const uint8_t *scalar, uint8_t *masked_scalar);
+int ecdsa_unmask_scalar(const ecdsa_curve *curve, const uint8_t *masking_key,
+                        const uint8_t *masked_scalar, uint8_t *scalar);
+int ecdsa_unmask_public_key(const ecdsa_curve *curve,
+                            const uint8_t *masking_key,
+                            const uint8_t *masked_pub_key, uint8_t pub_key[65]);
 
 typedef enum {
   ECDSA_TWEAK_PUBKEY_SUCCESS = 0,
