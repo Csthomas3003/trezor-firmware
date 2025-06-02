@@ -62,6 +62,8 @@ typedef struct {
 #define MAX_WIF_SIZE (57)
 
 #define ECDSA_PRIVATE_KEY_SIZE 32
+#define ECDSA_PUBLIC_KEY_SIZE 65
+#define ECDSA_PUBLIC_KEY_COMPRESSED_SIZE 33
 
 void point_copy(const curve_point *cp1, curve_point *cp2);
 void point_add(const ecdsa_curve *curve, const curve_point *cp1,
