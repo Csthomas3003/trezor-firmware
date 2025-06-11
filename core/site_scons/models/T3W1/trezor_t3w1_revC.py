@@ -109,6 +109,8 @@ def configure(
         defines += [("USE_BLE", "1")]
         sources += ["embed/io/nrf/stm32u5/nrf.c"]
         sources += ["embed/io/nrf/stm32u5/nrf_test.c"]
+        sources += ["embed/io/nrf/stm32u5/nrf_uart.c"]
+        sources += ["embed/io/nrf/stm32u5/nrf_spi.c"]
         sources += ["embed/io/nrf/stm32u5/nrf_update.c"]
         sources += ["embed/io/nrf/crc8.c"]
         paths += ["embed/io/nrf/inc"]
