@@ -11,6 +11,38 @@ option (include_in_bitcoin_only) = true;
 
 
 /**
+ * Mapping between Trezor wire identifier (uint) and a Thp protobuf message
+ */
+enum ThpMessageType {
+    reserved 0 to 999;  // Values reserved by other messages, see messages.proto
+
+    ThpMessageType_ThpCreateNewSession = 1000 [(bitcoin_only) = true, (wire_in) = true];
+    reserved 1001 to 1005;  // never appeared in a release, reserved for future use
+    ThpMessageType_ThpPairingRequest = 1006 [(bitcoin_only) = true];
+    ThpMessageType_ThpPairingRequestApproved = 1007 [(bitcoin_only) = true];
+    ThpMessageType_ThpSelectMethod = 1008 [(bitcoin_only) = true];
+    ThpMessageType_ThpPairingPreparationsFinished = 1009 [(bitcoin_only) = true];
+    ThpMessageType_ThpCredentialRequest = 1010 [(bitcoin_only) = true];
+    ThpMessageType_ThpCredentialResponse = 1011 [(bitcoin_only) = true];
+    ThpMessageType_ThpEndRequest = 1012 [(bitcoin_only) = true];
+    ThpMessageType_ThpEndResponse = 1013 [(bitcoin_only) = true];
+    reserved 1014 to 1015;
+    ThpMessageType_ThpCodeEntryCommitment = 1016 [(bitcoin_only) = true];
+    ThpMessageType_ThpCodeEntryChallenge = 1017 [(bitcoin_only) = true];
+    ThpMessageType_ThpCodeEntryCpaceTrezor = 1018 [(bitcoin_only) = true];
+    ThpMessageType_ThpCodeEntryCpaceHostTag = 1019 [(bitcoin_only) = true];
+    ThpMessageType_ThpCodeEntrySecret = 1020 [(bitcoin_only) = true];
+    reserved 1021 to 1023;
+    ThpMessageType_ThpQrCodeTag = 1024 [(bitcoin_only) = true];
+    ThpMessageType_ThpQrCodeSecret = 1025 [(bitcoin_only) = true];
+    reserved 1026 to 1031;
+    ThpMessageType_ThpNfcTagHost = 1032 [(bitcoin_only) = true];
+    ThpMessageType_ThpNfcTagTrezor = 1033 [(bitcoin_only) = true];
+
+    reserved 1100 to 2147483647;  // Values reserved by other messages, see messages.proto
+}
+
+/**
  * Numeric identifiers of pairing methods.
  * @embed
  */
@@ -45,6 +77,8 @@ message ThpHandshakeCompletionReqNoisePayload {
  * @next Success
  */
 message ThpCreateNewSession{
+    option (wire_enum) = "ThpMessageType";
+
     optional string passphrase = 1;
     optional bool on_device = 2;                      // User wants to enter passphrase on the device
     optional bool derive_cardano = 3 [default=false]; // If True, Cardano keys will be derived. Ignored with BTC-only
@@ -57,6 +91,8 @@ message ThpCreateNewSession{
  * @next ThpPairingRequestApproved
  */
 message ThpPairingRequest{
+    option (wire_enum) = "ThpMessageType";
+
     optional string host_name = 1;     // Human-readable host name
 }
 
@@ -66,6 +102,7 @@ message ThpPairingRequest{
  * @next ThpSelectMethod
  */
 message ThpPairingRequestApproved{
+    option (wire_enum) = "ThpMessageType";
 }
 
 /**
@@ -75,6 +112,8 @@ message ThpPairingRequestApproved{
  * @next ThpCodeEntryCommitment
  */
 message ThpSelectMethod {
+    option (wire_enum) = "ThpMessageType";
+
     required ThpPairingMethod selected_pairing_method = 1;
 }
 
@@ -85,6 +124,7 @@ message ThpSelectMethod {
  * @next ThpNfcTagHost
  */
 message ThpPairingPreparationsFinished{
+    option (wire_enum) = "ThpMessageType";
 }
 
 /**
@@ -92,6 +132,8 @@ message ThpPairingPreparationsFinished{
  * @next ThpCodeEntryChallenge
  */
 message ThpCodeEntryCommitment {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes commitment = 1;     // SHA-256 of Trezor's random 32-byte secret
 }
 
@@ -100,6 +142,8 @@ message ThpCodeEntryCommitment {
  * @next ThpCodeEntryCpaceTrezor
  */
 message ThpCodeEntryChallenge {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes challenge = 1;      // Host's random 32-byte challenge
 }
 
@@ -108,6 +152,8 @@ message ThpCodeEntryChallenge {
  * @next ThpCodeEntryCpaceHostTag
  */
 message ThpCodeEntryCpaceTrezor {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes cpace_trezor_public_key = 1;  // Trezor's ephemeral CPace public key
 }
 
@@ -116,6 +162,8 @@ message ThpCodeEntryCpaceTrezor {
  * @next ThpCodeEntrySecret
  */
  message ThpCodeEntryCpaceHostTag {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes cpace_host_public_key = 1;    // Host's ephemeral CPace public key
     required bytes tag = 2;                      // SHA-256 of shared secret
 
@@ -127,6 +175,8 @@ message ThpCodeEntryCpaceTrezor {
  * @next ThpEndRequest
  */
 message ThpCodeEntrySecret {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes secret = 1;    // Trezor's secret
 }
 
@@ -135,6 +185,8 @@ message ThpCodeEntrySecret {
  * @next ThpQrCodeSecret
  */
 message ThpQrCodeTag {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes tag = 1;       // SHA-256 of shared secret
 }
 
@@ -144,6 +196,8 @@ message ThpQrCodeTag {
  * @next ThpEndRequest
  */
 message ThpQrCodeSecret {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes secret = 1;    // Trezor's secret
 }
 
@@ -152,6 +206,8 @@ message ThpQrCodeSecret {
  * @next ThpNfcTagTrezor
  */
 message ThpNfcTagHost {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes tag = 1;       // Host's tag
 }
 
@@ -161,6 +217,8 @@ message ThpNfcTagHost {
  * @next ThpEndRequest
  */
 message ThpNfcTagTrezor {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes tag = 1;       // Trezor's tag
 }
 
@@ -170,6 +228,8 @@ message ThpNfcTagTrezor {
  * @next ThpCredentialResponse
  */
 message ThpCredentialRequest {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes host_static_pubkey = 1;         // Host's static public key identifying the credential.
     optional bool autoconnect = 2 [default=false]; // Whether host wants to autoconnect without user confirmation
     optional bytes credential = 3;                 // Host's previous credential
@@ -181,6 +241,8 @@ message ThpCredentialRequest {
  * @next ThpEndRequest
  */
 message ThpCredentialResponse {
+    option (wire_enum) = "ThpMessageType";
+
     required bytes trezor_static_pubkey = 1;     // Trezor's static public key used in the handshake.
     required bytes credential = 2;               // The pairing credential issued by the Trezor to the host.
 }
@@ -190,13 +252,17 @@ message ThpCredentialResponse {
  * @start
  * @next ThpEndResponse
  */
-message ThpEndRequest {}
+message ThpEndRequest {
+    option (wire_enum) = "ThpMessageType";
+}
 
 /**
  * Response: Trezor approves transition to the encrypted traffic phase
  * @end
  */
-message ThpEndResponse {}
+message ThpEndResponse {
+    option (wire_enum) = "ThpMessageType";
+}
 
 /**
  * Only for internal use.
