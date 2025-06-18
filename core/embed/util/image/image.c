@@ -22,6 +22,9 @@
 
 #include "ed25519-donna/ed25519.h"
 
+#include "api.h"
+#include "pq_signature.h"
+
 #include <util/flash.h>
 #include <util/image.h>
 
@@ -145,6 +148,11 @@ secbool check_image_header_sig(const image_header *const hdr, uint8_t key_m,
   return sectrue *
          (0 == ed25519_sign_open(fingerprint, IMAGE_HASH_DIGEST_LENGTH, pub,
                                  *(const ed25519_signature *)hdr->sig));
+}
+
+secbool check_pq_signature(const uint8_t *sig, size_t siglen, const uint8_t m,
+                           size_t mlen, const uint8_t *pk) {
+  return crypto_sign_verify(sig, siglen, m, mlen, pk);
 }
 
 secbool __wur read_vendor_header(const uint8_t *const data,

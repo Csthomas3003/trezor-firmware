@@ -6,6 +6,8 @@ import tools, models
 TREZOR_MODEL = ARGUMENTS.get('TREZOR_MODEL', 'T2T1')
 CMAKELISTS = int(ARGUMENTS.get('CMAKELISTS', 0))
 HW_REVISION = ARGUMENTS.get('HW_REVISION', None)
+PQ_SIGNATURE_ALGORITHM = os.getenv("PQ_SIGNATURE_ALGORITHM", "sphincs-sha2-128s-simple")
+PQ_SIGNATURE_VERIFICATION_ONLY = os.getenv("PQ_SIGNATURE_VERIFICATION_ONLY", "0") == "1"
 
 FEATURES_WANTED = [
     "display",
@@ -51,6 +53,27 @@ SOURCE_MOD_CRYPTO += [
     'vendor/trezor-crypto/memzero.c',
     'vendor/trezor-crypto/sha2.c',
 ]
+if PQ_SIGNATURE_ALGORITHM:
+    PQ_SIGNATURE_PATH = (
+        f"vendor/pqm4/mupq/pqclean/crypto_sign/{PQ_SIGNATURE_ALGORITHM}/clean/"
+    )
+    PQ_SIGNATURE_PREFIX = (
+        f'PQCLEAN_{PQ_SIGNATURE_ALGORITHM.upper().replace("-", "")}_CLEAN'
+    )
+    PQ_SIGNATURE_CPPPATH = [
+        PQ_SIGNATURE_PATH,
+        "vendor/trezor-crypto/pq_signature",
+        "vendor/trezor-crypto",
+    ]
+    PQ_SIGNATURE_CPPDEFINES = [("PQ_SIGNATURE_PREFIX", PQ_SIGNATURE_PREFIX)]
+    PQ_SIGNATURE_CCFLAGS_MOD = "-Wno-unused-function -Wno-incompatible-pointer-types"
+    if PQ_SIGNATURE_VERIFICATION_ONLY:
+        PQ_SIGNATURE_CPPDEFINES += ["PQ_SIGNATURE_VERIFICATION_ONLY"]
+    PQ_SIGNATURE_SOURCE = Glob(PQ_SIGNATURE_PATH + "*.c") + Glob(
+        "vendor/trezor-crypto/pq_signature/*.c"
+    )
+    CPPPATH_MOD += [PQ_SIGNATURE_PATH]
+    CPPDEFINES_MOD += PQ_SIGNATURE_CPPDEFINES
 
 # modtrezorui
 CPPPATH_MOD += [
@@ -147,9 +170,14 @@ env.Replace(
     ASPPFLAGS='$CFLAGS $CCFLAGS',
     )
 
+source_files = SOURCE_MOD + SOURCE_MOD_CRYPTO + SOURCE_BOARDLOADER + SOURCE_HAL
+if PQ_SIGNATURE_ALGORITHM:
+    source_files.extend(PQ_SIGNATURE_SOURCE)
+
 env.Replace(
-    ALLSOURCES=SOURCE_MOD + SOURCE_MOD_CRYPTO + SOURCE_BOARDLOADER + SOURCE_HAL,
-    ALLDEFS=tools.get_defs_for_cmake(env['CPPDEFINES'] + env['CPPDEFINES_IMPLICIT']))
+    ALLSOURCES=source_files,
+    ALLDEFS=tools.get_defs_for_cmake(env["CPPDEFINES"] + env["CPPDEFINES_IMPLICIT"]),
+)
 
 cmake_gen = env.Command(
     target='CMakeLists.txt',
@@ -166,6 +194,14 @@ obj_program += env.Object(source=SOURCE_MOD)
 obj_program += env.Object(source=SOURCE_MOD_CRYPTO, CCFLAGS='$CCFLAGS -ftrivial-auto-var-init=zero')
 obj_program += env.Object(source=SOURCE_BOARDLOADER)
 obj_program += env.Object(source=SOURCE_HAL)
+
+if PQ_SIGNATURE_ALGORITHM:
+    obj_program += env.Object(
+        source=PQ_SIGNATURE_SOURCE,
+        CCFLAGS=f"$CCFLAGS {PQ_SIGNATURE_CCFLAGS_MOD}",
+        CPPPATH=PQ_SIGNATURE_CPPPATH,
+        CPPDEFINES=PQ_SIGNATURE_CPPDEFINES,
+    )
 
 linkerscript_gen = env.Command(
     target='memory.ld',
