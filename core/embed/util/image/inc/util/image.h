@@ -129,6 +129,9 @@ secbool __wur check_image_model(const image_header *const hdr);
 secbool __wur check_image_header_sig(const image_header *const hdr,
                                      uint8_t key_m, uint8_t key_n,
                                      const uint8_t *const *keys);
+secbool __wur check_pq_signature(const uint8_t *sig, size_t siglen,
+                                 const uint8_t *m, size_t mlen,
+                                 const uint8_t *pk);
 
 secbool __wur read_vendor_header(const uint8_t *const data,
                                  vendor_header *const vhdr);
