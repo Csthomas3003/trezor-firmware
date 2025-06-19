@@ -139,8 +139,7 @@ int main(void) {
   ensure(check_image_contents(hdr, IMAGE_HEADER_SIZE, &BOOTLOADER_AREA),
          "invalid bootloader hash");
 
-  ensure(check_pq_signature(hdr, 1, hdr, 2, BOARDLOADER_KEY_M),
-         "invalid pq signature");
+  ensure(check_pq_signature(), "invalid pq signature");
 
   uint8_t bld_min_version = get_bootloader_min_version();
   ensure((hdr->monotonic >= bld_min_version) * sectrue,
