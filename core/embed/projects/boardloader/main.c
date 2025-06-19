@@ -30,6 +30,7 @@
 #include <util/flash_utils.h>
 #include <util/image.h>
 #include <util/option_bytes.h>
+#include <util/pq.h>
 #include <util/rsod.h>
 
 #ifdef USE_PMIC
