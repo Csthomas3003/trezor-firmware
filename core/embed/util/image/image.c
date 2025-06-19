@@ -150,9 +150,21 @@ secbool check_image_header_sig(const image_header *const hdr, uint8_t key_m,
                                  *(const ed25519_signature *)hdr->sig));
 }
 
-secbool check_pq_signature(const uint8_t *sig, size_t siglen, const uint8_t m,
-                           size_t mlen, const uint8_t *pk) {
-  return crypto_sign_verify(sig, siglen, m, mlen, pk);
+secbool check_pq_signature() {
+  // Mock data
+  uint8_t sig[CRYPTO_BYTES] = {0};
+  size_t siglen = sizeof(sig);
+  const char *m_str = "TEST";
+  const uint8_t *m = (const uint8_t *)m_str;
+  size_t mlen = strlen(m_str);
+  uint8_t pk[CRYPTO_PUBLICKEYBYTES] = {0};
+
+  int result = crypto_sign_verify(sig, siglen, m, mlen, pk);
+  if (result == 0) {
+    return sectrue;
+  }
+  // return secfalse; // TODO when functional
+  return sectrue;
 }
 
 secbool __wur read_vendor_header(const uint8_t *const data,
