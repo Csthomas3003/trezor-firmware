@@ -19,16 +19,17 @@
 
 #ifdef USE_POWER_MANAGER
 
+#include <trezor_rtl.h>
+
+#include <stdlib.h>
+
 #include <rtl/cli.h>
 #include <rtl/mini_printf.h>
 #include <rtl/unit_test.h>
 #include <rust_ui_prodtest.h>
 #include <sys/power_manager.h>
+#include <sys/rtc.h>
 #include <sys/systick.h>
-
-#include <trezor_rtl.h>
-
-#include <stdlib.h>
 
 #include "prodtest.h"
 
@@ -56,21 +57,65 @@ void prodtest_pm_hibernate(cli_t* cli) {
 }
 
 void prodtest_pm_suspend(cli_t* cli) {
-  if (cli_arg_count(cli) > 0) {
+  uint32_t wakeup_time = 0;
+
+  if (cli_has_arg(cli, "wakeup-time")) {
+    if (!cli_arg_uint32(cli, "wakeup-time", &wakeup_time) || wakeup_time < 1 ||
+        wakeup_time > 65536) {
+      cli_error_arg(cli, "Expecting wake-up time in seconds (1..65536).");
+      return;
+    }
+  }
+
+  if (cli_arg_count(cli) > 1) {
     cli_error_arg_count(cli);
     return;
   }
 
   cli_trace(cli, "Suspending the device to low-power mode...");
-  cli_trace(cli, "Press the POWER button to resume.");
+  cli_trace(cli, "Press a button to resume.");
   systick_delay_ms(1000);
 
-  pm_suspend(NULL);
+  if (wakeup_time > 0) {
+    cli_trace(cli, "Otherwise, the device will wake up in %d seconds.",
+              wakeup_time);
+    rtc_wakeup_timer_start(wakeup_time);
+  }
+
+  wakeup_flags_t wakeup_flags = 0;
+
+  pm_suspend(&wakeup_flags);
 
   systick_delay_ms(1500);
   cli_trace(cli, "Resumed to active mode.");
 
-  cli_ok(cli, "");
+  char flags_str[128] = "";
+
+  if (wakeup_flags & WAKEUP_FLAG_BUTTON) {
+    strcat(flags_str, "BUTTON ");
+  }
+
+  if (wakeup_flags & WAKEUP_FLAG_POWER) {
+    strcat(flags_str, "POWER ");
+  }
+
+  if (wakeup_flags & WAKEUP_FLAG_BLE) {
+    strcat(flags_str, "BLE ");
+  }
+
+  if (wakeup_flags & WAKEUP_FLAG_NFC) {
+    strcat(flags_str, "NFC ");
+  }
+
+  if (wakeup_flags & WAKEUP_FLAG_RTC) {
+    strcat(flags_str, "RTC ");
+  }
+
+  if (wakeup_flags == 0) {
+    cli_trace(cli, "Woken up by unknown reason.");
+  }
+
+  cli_ok(cli, "%s", flags_str);
 }
 
 void prodtest_pm_charge_disable(cli_t* cli) {
@@ -387,7 +432,7 @@ PRODTEST_CLI_CMD(
     .name = "pm-suspend",
     .func = prodtest_pm_suspend,
     .info = "Suspend the device to low-power mode",
-    .args = ""
+    .args = "[<wakeup-time>]"
 );
 
 PRODTEST_CLI_CMD(
