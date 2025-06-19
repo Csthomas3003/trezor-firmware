@@ -11,6 +11,9 @@ PRODUCTION = 0 if BOOTLOADER_QA else ARGUMENTS.get('PRODUCTION', '0') == '1'
 HW_REVISION = ARGUMENTS.get('HW_REVISION', None)
 UI_DEBUG_OVERLAY = ARGUMENTS.get('UI_DEBUG_OVERLAY', '0') == '1'
 
+PQ_SIGNATURE_ALGORITHM = os.getenv("PQ_SIGNATURE_ALGORITHM", "sphincs-sha2-128s-simple")
+PQ_SIGNATURE_VERIFICATION_ONLY = os.getenv("PQ_SIGNATURE_VERIFICATION_ONLY", "0") == "1"
+
 FEATURES_WANTED = [
     "ble",
     "consumption_mask",
@@ -108,6 +111,28 @@ SOURCE_NANOPB = [
 ]
 
 ui.init_ui(TREZOR_MODEL, "bootloader", RUST_UI_FEATURES)
+
+if PQ_SIGNATURE_ALGORITHM:
+    PQ_SIGNATURE_PATH = (
+        f"vendor/pqm4/mupq/pqclean/crypto_sign/{PQ_SIGNATURE_ALGORITHM}/clean/"
+    )
+    PQ_SIGNATURE_PREFIX = (
+        f'PQCLEAN_{PQ_SIGNATURE_ALGORITHM.upper().replace("-", "")}_CLEAN'
+    )
+    PQ_SIGNATURE_CPPPATH = [
+        PQ_SIGNATURE_PATH,
+        "vendor/trezor-crypto/pq_signature",
+        "vendor/trezor-crypto",
+    ]
+    PQ_SIGNATURE_CPPDEFINES = [("PQ_SIGNATURE_PREFIX", PQ_SIGNATURE_PREFIX)]
+    PQ_SIGNATURE_CCFLAGS_MOD = "-Wno-unused-function -Wno-incompatible-pointer-types"
+    if PQ_SIGNATURE_VERIFICATION_ONLY:
+        PQ_SIGNATURE_CPPDEFINES += ["PQ_SIGNATURE_VERIFICATION_ONLY"]
+    PQ_SIGNATURE_SOURCE = Glob(PQ_SIGNATURE_PATH + "*.c") + Glob(
+        "vendor/trezor-crypto/pq_signature/*.c"
+    )
+    CPPPATH_MOD += [PQ_SIGNATURE_PATH]
+    CPPDEFINES_MOD += PQ_SIGNATURE_CPPDEFINES
 
 env = Environment(
     ENV=os.environ,
