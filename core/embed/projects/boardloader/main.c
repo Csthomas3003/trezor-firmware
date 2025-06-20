@@ -145,6 +145,8 @@ int main(void) {
       (const uint8_t *)BOOTLOADER_START, BOOTLOADER_IMAGE_MAGIC,
       flash_area_get_size(&BOOTLOADER_AREA));
 
+  ensure(check_pq_signature(), "invalid pq signature");
+
   ensure(hdr == (const image_header *)BOOTLOADER_START ? sectrue : secfalse,
          "invalid bootloader header");
 
@@ -154,8 +156,6 @@ int main(void) {
 
   ensure(check_image_contents(hdr, IMAGE_HEADER_SIZE, &BOOTLOADER_AREA),
          "invalid bootloader hash");
-
-  ensure(check_pq_signature(), "invalid pq signature");
 
   uint8_t bld_min_version = get_bootloader_min_version();
   ensure((hdr->monotonic >= bld_min_version) * sectrue,
