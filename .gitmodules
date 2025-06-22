@@ -39,3 +39,6 @@
 [submodule "vendor/pqm4"]
 	path = vendor/pqm4
 	url = https://github.com/mupq/pqm4
+[submodule "vendor/sloth"]
+	path = vendor/sloth
+	url = https://github.com/slh-dsa/sloth
