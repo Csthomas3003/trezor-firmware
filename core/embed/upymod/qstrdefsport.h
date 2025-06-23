@@ -386,13 +386,11 @@ Q(workflow_handlers)
 Q(writers)
 
 #if USE_THP
-Q(ThpMessageType)
 Q(ThpPairingMethod)
 Q(apps.thp)
 Q(apps.thp.credential_manager)
 Q(credential_manager)
 Q(thp)
-Q(trezor.enums.ThpMessageType)
 Q(trezor.enums.ThpPairingMethod)
 #endif
 
