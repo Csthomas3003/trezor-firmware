@@ -47,7 +47,7 @@ async def confirm_allow_trust_op(op: StellarAllowTrustOp) -> None:
         "op_allow_trust",
         TR.stellar__allow_trust if op.is_authorized else TR.stellar__revoke_trust,
         (
-            (TR.stellar__asset, op.asset_code),
+            (TR.words__asset, op.asset_code),
             (TR.stellar__trusted_account, op.trusted_account),
         ),
     )

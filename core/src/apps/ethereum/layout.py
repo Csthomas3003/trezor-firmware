@@ -24,6 +24,7 @@ if TYPE_CHECKING:
         EthereumNetworkInfo,
         EthereumStructMember,
         EthereumTokenInfo,
+        PaymentRequest,
     )
 
 
@@ -100,6 +101,29 @@ async def require_confirm_tx(
         fee_info_items,
         is_contract_interaction,
         chunkify=chunkify,
+    )
+
+
+async def require_confirm_payment_req(
+    payment_req: PaymentRequest,
+    address_n: list[int],
+    maximum_fee: str,
+    fee_info_items: Iterable[tuple[str, str]],
+) -> None:
+    from trezor.ui.layouts import confirm_ethereum_payment_req
+
+    account, account_path = get_account_and_path(address_n)
+
+    await confirm_ethereum_payment_req(
+        payment_req.recipient_name,
+        [
+            ("- XXX ETH", f"+ {memo.coin_purchase_memo.amount}")
+            for memo in payment_req.memos
+            if memo.coin_purchase_memo
+        ],
+        account_path,
+        maximum_fee,
+        fee_info_items,
     )
 
 

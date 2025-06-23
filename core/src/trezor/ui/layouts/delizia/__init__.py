@@ -62,6 +62,23 @@ def confirm_action(
     )
 
 
+def confirm_trade(
+    title: str,
+    subtitle: str,
+    sell_amount: str,
+    buy_amount: str,
+) -> Awaitable[None]:
+    return raise_if_not_confirmed(
+        trezorui_api.confirm_trade(
+            title=title,
+            subtitle=subtitle,
+            sell_amount=sell_amount,
+            buy_amount=buy_amount,
+        ),
+        "confirm_trade",
+    )
+
+
 def confirm_single(
     br_name: str,
     title: str,
@@ -976,6 +993,46 @@ if not utils.BITCOIN_ONLY:
             TR.confirm_total__title_fee,
         )
 
+    async def confirm_ethereum_payment_req(
+        recipient_name: str,
+        trades: Iterable[tuple[str, str]],
+        account_path: str | None,
+        maximum_fee: str,
+        fee_info_items: Iterable[tuple[str, str]],
+    ) -> None:
+        main_layout = trezorui_api.confirm_value(
+            title=TR.words__swap,
+            subtitle=TR.words__provider,
+            value=recipient_name,
+            verb=TR.instructions__tap_to_continue,
+            verb_cancel=None,
+            #            info=True,
+            chunkify=False,
+        )
+
+        # TODO: should be with_info and have a menu
+        await raise_if_not_confirmed(main_layout, "payment_request_provider")
+
+        for sell_amount, buy_amount in trades:
+            await confirm_trade(
+                TR.words__swap, TR.words__asset, sell_amount, buy_amount
+            )
+
+        account_items = []
+        if account_path:
+            account_items.append((TR.address_details__derivation_path, account_path))
+
+        await _confirm_summary(
+            None,
+            None,
+            maximum_fee,
+            "Transaction fee",
+            TR.words__title_summary,
+            [],  # TODO
+            fee_info_items,
+            TR.confirm_total__title_fee,
+        )
+
     async def confirm_ethereum_staking_tx(
         title: str,
         intro_question: str,
@@ -1092,7 +1149,7 @@ if not utils.BITCOIN_ONLY:
                 title=title,
                 subtitle=None,
                 description=description,
-                extra=f"\n{TR.solana__stake_provider}:" if vote_account else None,
+                extra=f"\n{TR.words__provider}:" if vote_account else None,
                 message=vote_account,
                 amount=None,
                 chunkify=True,
