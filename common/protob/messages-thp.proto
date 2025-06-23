@@ -58,7 +58,7 @@ enum ThpPairingMethod {
  */
 message ThpDeviceProperties {
     required string internal_model = 1;               // Internal model name e.g. "T2B1".
-    optional uint32 model_variant = 2;                // Encodes the device properties such as color.
+    optional uint32 model_variant = 2 [default=0];    // Encodes the device properties such as color.
     required uint32 protocol_version_major = 3;       // The major version of the communication protocol used by the firmware.
     required uint32 protocol_version_minor = 4;       // The minor version of the communication protocol used by the firmware.
     repeated ThpPairingMethod pairing_methods = 5;    // The pairing methods supported by the Trezor.

@@ -7866,7 +7866,7 @@ class ThpDeviceProperties(protobuf.MessageType):
     MESSAGE_WIRE_TYPE = None
     FIELDS = {
         1: protobuf.Field("internal_model", "string", repeated=False, required=True),
-        2: protobuf.Field("model_variant", "uint32", repeated=False, required=False, default=None),
+        2: protobuf.Field("model_variant", "uint32", repeated=False, required=False, default=0),
         3: protobuf.Field("protocol_version_major", "uint32", repeated=False, required=True),
         4: protobuf.Field("protocol_version_minor", "uint32", repeated=False, required=True),
         5: protobuf.Field("pairing_methods", "ThpPairingMethod", repeated=True, required=False, default=None),
@@ -7879,7 +7879,7 @@ class ThpDeviceProperties(protobuf.MessageType):
         protocol_version_major: "int",
         protocol_version_minor: "int",
         pairing_methods: Optional[Sequence["ThpPairingMethod"]] = None,
-        model_variant: Optional["int"] = None,
+        model_variant: Optional["int"] = 0,
     ) -> None:
         self.pairing_methods: Sequence["ThpPairingMethod"] = pairing_methods if pairing_methods is not None else []
         self.internal_model = internal_model

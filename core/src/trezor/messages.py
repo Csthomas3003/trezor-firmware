@@ -6155,7 +6155,7 @@ if TYPE_CHECKING:
 
     class ThpDeviceProperties(protobuf.MessageType):
         internal_model: "str"
-        model_variant: "int | None"
+        model_variant: "int"
         protocol_version_major: "int"
         protocol_version_minor: "int"
         pairing_methods: "list[ThpPairingMethod]"

@@ -93,7 +93,7 @@ impl ThpDeviceProperties {
     // optional uint32 model_variant = 2;
 
     pub fn model_variant(&self) -> u32 {
-        self.model_variant.unwrap_or(0)
+        self.model_variant.unwrap_or(0u32)
     }
 
     pub fn clear_model_variant(&mut self) {
@@ -4219,10 +4219,10 @@ impl ThpPairingMethod {
 
 static file_descriptor_proto_data: &'static [u8] = b"\
     \n\x12messages-thp.proto\x12\x16hw.trezor.messages.thp\x1a\roptions.prot\
-    o\"\xa0\x02\n\x13ThpDeviceProperties\x12%\n\x0einternal_model\x18\x01\
-    \x20\x02(\tR\rinternalModel\x12#\n\rmodel_variant\x18\x02\x20\x01(\rR\
-    \x0cmodelVariant\x124\n\x16protocol_version_major\x18\x03\x20\x02(\rR\
-    \x14protocolVersionMajor\x124\n\x16protocol_version_minor\x18\x04\x20\
+    o\"\xa3\x02\n\x13ThpDeviceProperties\x12%\n\x0einternal_model\x18\x01\
+    \x20\x02(\tR\rinternalModel\x12&\n\rmodel_variant\x18\x02\x20\x01(\r:\
+    \x010R\x0cmodelVariant\x124\n\x16protocol_version_major\x18\x03\x20\x02(\
+    \rR\x14protocolVersionMajor\x124\n\x16protocol_version_minor\x18\x04\x20\
     \x02(\rR\x14protocolVersionMinor\x12Q\n\x0fpairing_methods\x18\x05\x20\
     \x03(\x0e2(.hw.trezor.messages.thp.ThpPairingMethodR\x0epairingMethods\"\
     _\n%ThpHandshakeCompletionReqNoisePayload\x126\n\x17host_pairing_credent\
@@ -4269,33 +4269,26 @@ static file_descriptor_proto_data: &'static [u8] = b"\
     edCredentialData\x12,\n\x12host_static_pubkey\x18\x01\x20\x02(\x0cR\x10h\
     ostStaticPubkey\x12R\n\rcred_metadata\x18\x02\x20\x02(\x0b2-.hw.trezor.m\
     essages.thp.ThpCredentialMetadataR\x0ccredMetadata:\x04\x98\xb2\x19\x01*\
-    \x8f\x07\n\x0eThpMessageType\x121\n\"ThpMessageType_ThpCreateNewSession\
-    \x10\xe8\x07\x1a\x08\x80\xa6\x1d\x01\x90\xb5\x18\x01\x12+\n\x20ThpMessag\
-    eType_ThpPairingRequest\x10\xee\x07\x1a\x04\x80\xa6\x1d\x01\x123\n(ThpMe\
-    ssageType_ThpPairingRequestApproved\x10\xef\x07\x1a\x04\x80\xa6\x1d\x01\
-    \x12)\n\x1eThpMessageType_ThpSelectMethod\x10\xf0\x07\x1a\x04\x80\xa6\
-    \x1d\x01\x128\n-ThpMessageType_ThpPairingPreparationsFinished\x10\xf1\
-    \x07\x1a\x04\x80\xa6\x1d\x01\x12.\n#ThpMessageType_ThpCredentialRequest\
-    \x10\xf2\x07\x1a\x04\x80\xa6\x1d\x01\x12/\n$ThpMessageType_ThpCredential\
-    Response\x10\xf3\x07\x1a\x04\x80\xa6\x1d\x01\x12'\n\x1cThpMessageType_Th\
-    pEndRequest\x10\xf4\x07\x1a\x04\x80\xa6\x1d\x01\x12(\n\x1dThpMessageType\
-    _ThpEndResponse\x10\xf5\x07\x1a\x04\x80\xa6\x1d\x01\x120\n%ThpMessageTyp\
-    e_ThpCodeEntryCommitment\x10\xf8\x07\x1a\x04\x80\xa6\x1d\x01\x12/\n$ThpM\
-    essageType_ThpCodeEntryChallenge\x10\xf9\x07\x1a\x04\x80\xa6\x1d\x01\x12\
-    1\n&ThpMessageType_ThpCodeEntryCpaceTrezor\x10\xfa\x07\x1a\x04\x80\xa6\
-    \x1d\x01\x122\n'ThpMessageType_ThpCodeEntryCpaceHostTag\x10\xfb\x07\x1a\
-    \x04\x80\xa6\x1d\x01\x12,\n!ThpMessageType_ThpCodeEntrySecret\x10\xfc\
-    \x07\x1a\x04\x80\xa6\x1d\x01\x12&\n\x1bThpMessageType_ThpQrCodeTag\x10\
-    \x80\x08\x1a\x04\x80\xa6\x1d\x01\x12)\n\x1eThpMessageType_ThpQrCodeSecre\
-    t\x10\x81\x08\x1a\x04\x80\xa6\x1d\x01\x12'\n\x1cThpMessageType_ThpNfcTag\
-    Host\x10\x88\x08\x1a\x04\x80\xa6\x1d\x01\x12)\n\x1eThpMessageType_ThpNfc\
-    TagTrezor\x10\x89\x08\x1a\x04\x80\xa6\x1d\x01\"\x05\x08\0\x10\xe7\x07\"\
-    \x06\x08\xe9\x07\x10\xed\x07\"\x06\x08\xf6\x07\x10\xf7\x07\"\x06\x08\xfd\
-    \x07\x10\xff\x07\"\x06\x08\x82\x08\x10\x87\x08\"\t\x08\xcc\x08\x10\xff\
-    \xff\xff\xff\x07*G\n\x10ThpPairingMethod\x12\x0f\n\x0bSkipPairing\x10\
-    \x01\x12\r\n\tCodeEntry\x10\x02\x12\n\n\x06QrCode\x10\x03\x12\x07\n\x03N\
-    FC\x10\x04B;\n#com.satoshilabs.trezor.lib.protobufB\x10TrezorMessageThp\
-    \x80\xa6\x1d\x01\
+    \x9f\x06\n\x0eThpMessageType\x12'\n\"ThpMessageType_ThpCreateNewSession\
+    \x10\xe8\x07\x12%\n\x20ThpMessageType_ThpPairingRequest\x10\xee\x07\x12-\
+    \n(ThpMessageType_ThpPairingRequestApproved\x10\xef\x07\x12#\n\x1eThpMes\
+    sageType_ThpSelectMethod\x10\xf0\x07\x122\n-ThpMessageType_ThpPairingPre\
+    parationsFinished\x10\xf1\x07\x12(\n#ThpMessageType_ThpCredentialRequest\
+    \x10\xf2\x07\x12)\n$ThpMessageType_ThpCredentialResponse\x10\xf3\x07\x12\
+    !\n\x1cThpMessageType_ThpEndRequest\x10\xf4\x07\x12\"\n\x1dThpMessageTyp\
+    e_ThpEndResponse\x10\xf5\x07\x12*\n%ThpMessageType_ThpCodeEntryCommitmen\
+    t\x10\xf8\x07\x12)\n$ThpMessageType_ThpCodeEntryChallenge\x10\xf9\x07\
+    \x12+\n&ThpMessageType_ThpCodeEntryCpaceTrezor\x10\xfa\x07\x12,\n'ThpMes\
+    sageType_ThpCodeEntryCpaceHostTag\x10\xfb\x07\x12&\n!ThpMessageType_ThpC\
+    odeEntrySecret\x10\xfc\x07\x12\x20\n\x1bThpMessageType_ThpQrCodeTag\x10\
+    \x80\x08\x12#\n\x1eThpMessageType_ThpQrCodeSecret\x10\x81\x08\x12!\n\x1c\
+    ThpMessageType_ThpNfcTagHost\x10\x88\x08\x12#\n\x1eThpMessageType_ThpNfc\
+    TagTrezor\x10\x89\x08\"\x05\x08\0\x10\xe7\x07\"\x06\x08\xe9\x07\x10\xed\
+    \x07\"\x06\x08\xf6\x07\x10\xf7\x07\"\x06\x08\xfd\x07\x10\xff\x07\"\x06\
+    \x08\x82\x08\x10\x87\x08\"\t\x08\xcc\x08\x10\xff\xff\xff\xff\x07*G\n\x10\
+    ThpPairingMethod\x12\x0f\n\x0bSkipPairing\x10\x01\x12\r\n\tCodeEntry\x10\
+    \x02\x12\n\n\x06QrCode\x10\x03\x12\x07\n\x03NFC\x10\x04B;\n#com.satoshil\
+    abs.trezor.lib.protobufB\x10TrezorMessageThp\x80\xa6\x1d\x01\
 ";
 
 /// `FileDescriptorProto` object which was a source for this generated file
