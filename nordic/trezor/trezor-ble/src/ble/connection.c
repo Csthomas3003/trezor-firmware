@@ -67,6 +67,8 @@ void connected(struct bt_conn *conn, uint8_t err) {
 void disconnected(struct bt_conn *conn, uint8_t reason) {
   char addr[BT_ADDR_LE_STR_LEN];
 
+  advertising_stop();
+
   pairing_reset();
 
   if (current_conn && conn == current_conn) {
