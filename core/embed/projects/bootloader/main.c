@@ -354,17 +354,15 @@ void real_jump_to_firmware(void) {
     secmon_code_offset = IMAGE_CODE_ALIGN(SECMON_HEADER_SIZE);
   }
 
-  if ((vhdr.vtrust & VTRUST_SKIP_SECMON_VERIFICATION) != 0) {
-    ensure((secmon_hdr != NULL) * sectrue, "Secmon header not found");
+  ensure((secmon_hdr != NULL) * sectrue, "Secmon header not found");
 
-    ensure(check_secmon_model(secmon_hdr), "Wrong secmon model");
+  ensure(check_secmon_model(secmon_hdr), "Wrong secmon model");
 
-    ensure(check_secmon_header_sig(secmon_hdr), "Invalid secmon signature");
+  ensure(check_secmon_header_sig(secmon_hdr), "Invalid secmon signature");
 
-    ensure(check_secmon_contents(secmon_hdr, secmon_start - FIRMWARE_START,
-                                 &FIRMWARE_AREA),
-           "Secmon is corrupted");
-  }
+  ensure(check_secmon_contents(secmon_hdr, secmon_start - FIRMWARE_START,
+                               &FIRMWARE_AREA),
+         "Secmon is corrupted");
 #endif
 
   secbool provisioning_access =
@@ -518,30 +516,26 @@ int bootloader_main(void) {
   const secmon_header_t *secmon_hdr = read_secmon_header(
       (const uint8_t *)secmon_start, SECMON_IMAGE_MAGIC, FIRMWARE_MAXSIZE);
 
-  if ((vhdr.vtrust & VTRUST_SKIP_SECMON_VERIFICATION) != 0) {
-    volatile secbool secmon_header_present = secfalse;
-    volatile secbool secmon_model_valid = secfalse;
-    volatile secbool secmon_header_sig_valid = secfalse;
-    volatile secbool secmon_contents_valid = secfalse;
+  volatile secbool secmon_header_present = secfalse;
+  volatile secbool secmon_model_valid = secfalse;
+  volatile secbool secmon_header_sig_valid = secfalse;
+  volatile secbool secmon_contents_valid = secfalse;
 
-    secmon_header_present =
-        secbool_and(secmon_header_present, (secmon_hdr != NULL) * sectrue);
+  secmon_header_present =
+      secbool_and(secmon_header_present, (secmon_hdr != NULL) * sectrue);
 
-    secmon_model_valid =
-        secbool_and(secmon_header_present, check_secmon_model(secmon_hdr));
+  secmon_model_valid =
+      secbool_and(secmon_header_present, check_secmon_model(secmon_hdr));
 
-    secmon_header_sig_valid =
-        secbool_and(secmon_model_valid, check_secmon_header_sig(secmon_hdr));
+  secmon_header_sig_valid =
+      secbool_and(secmon_model_valid, check_secmon_header_sig(secmon_hdr));
 
-    secmon_contents_valid = secbool_and(
-        secmon_header_sig_valid,
-        check_secmon_contents(secmon_hdr, secmon_start - FIRMWARE_START,
-                              &FIRMWARE_AREA));
+  secmon_contents_valid = secbool_and(
+      secmon_header_sig_valid,
+      check_secmon_contents(secmon_hdr, secmon_start - FIRMWARE_START,
+                            &FIRMWARE_AREA));
 
-    secmon_valid = secmon_contents_valid;
-  } else {
-    secmon_valid = header_present;
-  }
+  secmon_valid = secmon_contents_valid;
 #else
   secmon_valid = header_present;
 #endif

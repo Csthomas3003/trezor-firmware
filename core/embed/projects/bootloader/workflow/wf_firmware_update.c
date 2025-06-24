@@ -254,29 +254,27 @@ static upload_status_t process_msg_FirmwareUpload(protob_io_t *iface,
             SECMON_HEADER_SIZE;
       }
 
-      if ((vhdr.vtrust & VTRUST_SKIP_SECMON_VERIFICATION) != 0) {
-        if (secmon_hdr != (const secmon_header_t *)secmon_start) {
-          send_msg_failure(iface, FailureType_Failure_ProcessError,
-                           "Invalid secmon header");
-          return UPLOAD_ERR_INVALID_SECMON_HEADER;
-        }
-
-        if (sectrue != check_secmon_model(secmon_hdr)) {
-          send_msg_failure(iface, FailureType_Failure_ProcessError,
-                           "Wrong secmon model");
-          return UPLOAD_ERR_INVALID_SECMON_MODEL;
-        }
-
-        if (sectrue != check_secmon_header_sig(secmon_hdr)) {
-          send_msg_failure(iface, FailureType_Failure_ProcessError,
-                           "Invalid secmon signature");
-          return UPLOAD_ERR_INVALID_SECMON_HEADER_SIG;
-        }
-
-        ctx->secmon_code_size = secmon_hdr->codelen;
-        memcpy(ctx->expected_secmon_hash, secmon_hdr->hash,
-               IMAGE_HASH_DIGEST_LENGTH);
+      if (secmon_hdr != (const secmon_header_t *)secmon_start) {
+        send_msg_failure(iface, FailureType_Failure_ProcessError,
+                         "Invalid secmon header");
+        return UPLOAD_ERR_INVALID_SECMON_HEADER;
       }
+
+      if (sectrue != check_secmon_model(secmon_hdr)) {
+        send_msg_failure(iface, FailureType_Failure_ProcessError,
+                         "Wrong secmon model");
+        return UPLOAD_ERR_INVALID_SECMON_MODEL;
+      }
+
+      if (sectrue != check_secmon_header_sig(secmon_hdr)) {
+        send_msg_failure(iface, FailureType_Failure_ProcessError,
+                         "Invalid secmon signature");
+        return UPLOAD_ERR_INVALID_SECMON_HEADER_SIG;
+      }
+
+      ctx->secmon_code_size = secmon_hdr->codelen;
+      memcpy(ctx->expected_secmon_hash, secmon_hdr->hash,
+             IMAGE_HASH_DIGEST_LENGTH);
 #endif
 
       memcpy(&hdr, received_hdr, sizeof(hdr));

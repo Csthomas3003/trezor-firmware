@@ -90,8 +90,6 @@ typedef struct {
 
 #define VTRUST_ALLOW_PROVISIONING (0x200 | VTRUST_NO_WARNING)
 
-#define VTRUST_SKIP_SECMON_VERIFICATION 0x0400
-
 typedef struct {
   uint32_t magic;
   uint32_t hdrlen;
@@ -192,5 +190,3 @@ secbool __wur check_secmon_header_sig(const secmon_header_t *const hdr);
 secbool __wur check_secmon_contents(const secmon_header_t *const hdr,
                                     size_t code_offset,
                                     const flash_area_t *area);
-
-#endif
