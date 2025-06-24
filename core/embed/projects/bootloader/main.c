@@ -521,21 +521,29 @@ int bootloader_main(void) {
   volatile secbool secmon_header_sig_valid = secfalse;
   volatile secbool secmon_contents_valid = secfalse;
 
-  secmon_header_present =
-      secbool_and(secmon_header_present, (secmon_hdr != NULL) * sectrue);
+  if (sectrue == header_present) {
+    secmon_header_present =
+        secbool_and(header_present, (secmon_hdr != NULL) * sectrue);
+  }
 
-  secmon_model_valid =
-      secbool_and(secmon_header_present, check_secmon_model(secmon_hdr));
+  if (sectrue == secmon_header_present) {
+    secmon_model_valid =
+        secbool_and(secmon_header_present, check_secmon_model(secmon_hdr));
+  }
 
-  secmon_header_sig_valid =
-      secbool_and(secmon_model_valid, check_secmon_header_sig(secmon_hdr));
+  if (sectrue == secmon_model_valid) {
+    secmon_header_sig_valid =
+        secbool_and(secmon_model_valid, check_secmon_header_sig(secmon_hdr));
+  }
 
-  secmon_contents_valid = secbool_and(
-      secmon_header_sig_valid,
-      check_secmon_contents(secmon_hdr, secmon_start - FIRMWARE_START,
-                            &FIRMWARE_AREA));
+  if (sectrue == secmon_header_sig_valid) {
+    secmon_contents_valid = secbool_and(
+        secmon_header_sig_valid,
+        check_secmon_contents(secmon_hdr, secmon_start - FIRMWARE_START,
+                              &FIRMWARE_AREA));
+    secmon_valid = secmon_contents_valid;
+  }
 
-  secmon_valid = secmon_contents_valid;
 #else
   secmon_valid = header_present;
 #endif

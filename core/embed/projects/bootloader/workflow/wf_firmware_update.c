@@ -86,7 +86,7 @@ typedef struct {
   size_t secmon_code_processed;  // size of the processed secmon code
   uint8_t expected_secmon_hash[IMAGE_HASH_DIGEST_LENGTH];  // expected hash of
                                                            // the secmon code
-  IMAGE_HASH_CTX secmon_hash_ctx;
+  SHA256_CTX secmon_hash_ctx;
 #endif
 } firmware_update_ctx_t;
 
@@ -422,45 +422,6 @@ static upload_status_t process_msg_FirmwareUpload(protob_io_t *iface,
     return UPLOAD_ERR_FIRMWARE_TOO_BIG;
   }
 
-#ifdef USE_SECMON_VERIFICATION
-  // validate secmon code hash
-  if (ctx->secmon_code_size > 0) {
-    if (ctx->secmon_code_processed == 0) {
-      IMAGE_HASH_INIT(&ctx->secmon_hash_ctx);
-    }
-
-    size_t secmon_code_remaining =
-        ctx->secmon_code_size - ctx->secmon_code_processed;
-
-    size_t secmon_code_to_process = IMAGE_CHUNK_SIZE - ctx->secmon_code_offset;
-
-    secmon_code_to_process = MIN(secmon_code_to_process, secmon_code_remaining);
-
-    IMAGE_HASH_UPDATE(&ctx->secmon_hash_ctx,
-                      (uint8_t *)chunk_buffer + ctx->secmon_code_offset,
-                      secmon_code_to_process);
-
-    ctx->secmon_code_processed += secmon_code_to_process;
-    ctx->secmon_code_offset = 0;
-
-    if (ctx->secmon_code_processed >= ctx->secmon_code_size) {
-      // secmon code is fully processed
-      uint8_t secmon_hash[IMAGE_HASH_DIGEST_LENGTH];
-      IMAGE_HASH_FINAL(&ctx->secmon_hash_ctx, secmon_hash);
-
-      if (memcmp(secmon_hash, ctx->expected_secmon_hash,
-                 IMAGE_HASH_DIGEST_LENGTH) != 0) {
-        send_msg_failure(iface, FailureType_Failure_ProcessError,
-                         "Invalid secmon hash");
-        return UPLOAD_ERR_INVALID_SECMON_HASH;
-      }
-      ctx->secmon_code_size = 0;  // reset secmon code size to prevent
-                                  // reprocessing in the next chunk
-    }
-  }
-
-#endif
-
   if (sectrue !=
       check_single_hash(hdr.hashes + ctx->firmware_block * 32,
                         (uint8_t *)chunk_buffer + ctx->headers_offset,
@@ -487,6 +448,45 @@ static upload_status_t process_msg_FirmwareUpload(protob_io_t *iface,
                      "Invalid chunk hash");
     return UPLOAD_ERR_INVALID_CHUNK_HASH;
   }
+
+#ifdef USE_SECMON_VERIFICATION
+  // validate secmon code hash
+  if (ctx->secmon_code_size > 0) {
+    if (ctx->secmon_code_processed == 0) {
+      sha256_Init(&ctx->secmon_hash_ctx);
+    }
+
+    size_t secmon_code_remaining =
+        ctx->secmon_code_size - ctx->secmon_code_processed;
+
+    size_t secmon_code_to_process = IMAGE_CHUNK_SIZE - ctx->secmon_code_offset;
+
+    secmon_code_to_process = MIN(secmon_code_to_process, secmon_code_remaining);
+
+    sha256_Update(&ctx->secmon_hash_ctx,
+                  (uint8_t *)chunk_buffer + ctx->secmon_code_offset,
+                  secmon_code_to_process);
+
+    ctx->secmon_code_processed += secmon_code_to_process;
+    ctx->secmon_code_offset = 0;
+
+    if (ctx->secmon_code_processed >= ctx->secmon_code_size) {
+      // secmon code is fully processed
+      uint8_t secmon_hash[IMAGE_HASH_DIGEST_LENGTH];
+      sha256_Final(&ctx->secmon_hash_ctx, secmon_hash);
+
+      if (memcmp(secmon_hash, ctx->expected_secmon_hash,
+                 IMAGE_HASH_DIGEST_LENGTH) != 0) {
+        send_msg_failure(iface, FailureType_Failure_ProcessError,
+                         "Invalid secmon hash");
+        return UPLOAD_ERR_INVALID_SECMON_HASH;
+      }
+      ctx->secmon_code_size = 0;  // reset secmon code size to prevent
+      // reprocessing in the next chunk
+    }
+  }
+
+#endif
 
   // buffer with the received data
   const uint32_t *src = (const uint32_t *)chunk_buffer;
