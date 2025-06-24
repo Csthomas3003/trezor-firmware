@@ -18,7 +18,7 @@ use crate::{
 
 use super::{
     decode::{protobuf_decode, Decoder},
-    defs::{find_name_by_msg_offset, get_msg, MsgDef},
+    defs::{find_name_by_msg_offset, get_msg, EnumDef, MsgDef},
     encode::{protobuf_encode, protobuf_len},
 };
 
@@ -283,6 +283,15 @@ unsafe extern "C" fn msg_def_obj_is_type_of(self_in: Obj, obj: Obj) -> Obj {
 static MSG_DEF_OBJ_IS_TYPE_OF_OBJ: ffi::mp_obj_fun_builtin_fixed_t =
     obj_fn_2!(msg_def_obj_is_type_of);
 
+fn validate_wire_id_enum(wire_id: u16, enum_name: Qstr) -> Result<(), Error> {
+    let def =
+        EnumDef::for_name(enum_name.to_u16()).ok_or_else(|| Error::KeyError(enum_name.into()))?;
+    if !def.contains(wire_id) {
+        return Err(Error::OutOfRange);
+    }
+    Ok(())
+}
+
 #[no_mangle]
 pub extern "C" fn protobuf_debug_msg_type() -> &'static Type {
     MsgObj::obj_type()
@@ -303,9 +312,11 @@ pub extern "C" fn protobuf_type_for_name(name: Obj) -> Obj {
     unsafe { util::try_or_raise(block) }
 }
 
-pub extern "C" fn protobuf_type_for_wire(wire_id: Obj) -> Obj {
+pub extern "C" fn protobuf_type_for_wire(wire_id: Obj, enum_name: Obj) -> Obj {
     let block = || {
         let wire_id = u16::try_from(wire_id)?;
+        let enum_name = Qstr::try_from(enum_name)?;
+        validate_wire_id_enum(wire_id, enum_name)?;
         let def = MsgDef::for_wire_id(wire_id).ok_or_else(|| Error::KeyError(wire_id.into()))?;
         let obj = MsgDefObj::alloc(def)?.into();
         Ok(obj)
@@ -340,9 +351,9 @@ pub static mp_module_trezorproto: Module = obj_module! {
     ///     """Find the message definition for the given protobuf name."""
     Qstr::MP_QSTR_type_for_name => obj_fn_1!(protobuf_type_for_name).as_obj(),
 
-    /// def type_for_wire(wire_id: int) -> type[MessageType]:
-    ///     """Find the message definition for the given wire type (numeric identifier)."""
-    Qstr::MP_QSTR_type_for_wire => obj_fn_1!(protobuf_type_for_wire).as_obj(),
+    /// def type_for_wire(wire_id: int, enum_name: str) -> type[MessageType]:
+    ///     """Find the message definition for the given wire type (numeric identifier). TODO document enum_name"""
+    Qstr::MP_QSTR_type_for_wire => obj_fn_2!(protobuf_type_for_wire).as_obj(),
 
     /// def decode(
     ///     buffer: bytes,

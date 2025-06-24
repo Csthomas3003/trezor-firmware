@@ -111,6 +111,11 @@ impl EnumDef {
             get_enum(msg_offset)
         })
     }
+
+    pub fn contains(&self, x: u16) -> bool {
+        // NOTE: binary_search instead of contains might be faster
+        self.values.contains(&x)
+    }
 }
 
 #[repr(C, packed)]

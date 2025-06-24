@@ -246,9 +246,8 @@ class ProtoMessage:
         if "wire_type" in extensions:
             wire_type = extensions["wire_type"]
         elif "wire_enum" in extensions:
-            message_type_enum = find_by_name(
-                descriptor.enums, extensions["wire_enum"].bytes.decode()
-            )
+            enum_name = extensions["wire_enum"].bytes.decode()
+            message_type_enum = find_by_name(descriptor.enums, enum_name)
             custom_message_type = find_by_name(message_type_enum.value, message.name)
             if message_type is not None and custom_message_type != message_type:
                 # we are specifying two different message ids via MessageType and via the custom wire_enum
@@ -387,6 +386,15 @@ class Descriptor:
             for message in messages:
                 # recursively search for nested types in newly added messages
                 self._nested_types_from_message(message.orig)
+
+        # list of all enums containing wire_ids
+        self.all_message_types = [MESSAGE_TYPE_ENUM]
+        for m in self.messages:
+            if "wire_enum" not in m.extensions:
+                continue
+            wire_enum_name = m.extensions["wire_enum"].bytes.decode()
+            if wire_enum_name not in self.all_message_types:
+                self.all_message_types.append(wire_enum_name)
 
         if not self.messages and not self.enums:
             raise RuntimeError("No messages and no enums found.")
@@ -694,6 +702,9 @@ class RustBlobRenderer:
         return b"".join(
             NAME_ENTRY.build((self.qstr_map[e.name], self.enum_map[e.name]))
             for e in enums
+            # currently we only care about wire_id enums
+            # omit everything else to save space
+            if e.name in self.descriptor.all_message_types
         )
 
     def build_blob_wire(self):

@@ -240,7 +240,7 @@ impl Decoder {
             }
             FieldType::Enum(enum_type) => {
                 let enum_val = num.try_into()?;
-                if enum_type.values.contains(&enum_val) {
+                if enum_type.contains(enum_val) {
                     Ok(enum_val.into())
                 } else {
                     Err(error::invalid_value(field.name.into()))
