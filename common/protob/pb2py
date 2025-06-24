@@ -540,6 +540,7 @@ class RustBlobRenderer:
         blob_dir = Path(blob_dir)
 
         enum_blob = self.build_enums_with_offsets()
+        enum_name_blob = self.build_blob_enum_names()
 
         # build msg entries and fill out map
         msg_entries = self.build_message_entries()
@@ -548,12 +549,13 @@ class RustBlobRenderer:
         # encode blob
         msg_blob = self.build_message_blob(msg_entries)
 
-        name_blob = self.build_blob_names()
+        msg_name_blob = self.build_blob_message_names()
         wire_blob = self.build_blob_wire()
 
         (blob_dir / "proto_enums.data").write_bytes(enum_blob)
+        (blob_dir / "proto_enum_names.data").write_bytes(enum_name_blob)
         (blob_dir / "proto_msgs.data").write_bytes(msg_blob)
-        (blob_dir / "proto_names.data").write_bytes(name_blob)
+        (blob_dir / "proto_msg_names.data").write_bytes(msg_name_blob)
         (blob_dir / "proto_wire.data").write_bytes(wire_blob)
 
     def build_qstr_map(self, qstr_defs):
@@ -678,12 +680,20 @@ class RustBlobRenderer:
         else:
             raise ValueError(f"Cannot encode default value for field {field.name}")
 
-    def build_blob_names(self):
+    def build_blob_message_names(self):
         # sorting by Qstr value of the message name
         messages = sorted(self.descriptor.messages, key=lambda m: self.qstr_map[m.name])
         return b"".join(
             NAME_ENTRY.build((self.qstr_map[m.name], self.msg_map[m.name]))
             for m in messages
+        )
+
+    def build_blob_enum_names(self):
+        # sorting by Qstr value of the enum name
+        enums = sorted(self.descriptor.enums, key=lambda e: self.qstr_map[e.name])
+        return b"".join(
+            NAME_ENTRY.build((self.qstr_map[e.name], self.enum_map[e.name]))
+            for e in enums
         )
 
     def build_blob_wire(self):

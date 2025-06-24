@@ -10,7 +10,7 @@ pub struct MsgDef {
 
 impl MsgDef {
     pub fn for_name(msg_name: u16) -> Option<Self> {
-        find_msg_offset_by_name(msg_name).map(|msg_offset| unsafe {
+        find_msg_offset_by_name(msg_name, MSG_NAME_DEFS).map(|msg_offset| unsafe {
             // SAFETY: We are taking the offset right out of the definitions so we can be
             // sure it's to be trusted.
             get_msg(msg_offset)
@@ -103,6 +103,16 @@ pub struct EnumDef {
     pub values: &'static [u16],
 }
 
+impl EnumDef {
+    pub fn for_name(msg_name: u16) -> Option<Self> {
+        find_msg_offset_by_name(msg_name, ENUM_NAME_DEFS).map(|msg_offset| unsafe {
+            // SAFETY: We are taking the offset right out of the definitions so we can be
+            // sure it's to be trusted.
+            get_enum(msg_offset)
+        })
+    }
+}
+
 #[repr(C, packed)]
 struct NameDef {
     msg_name: u16,
@@ -116,15 +126,16 @@ macro_rules! proto_def_path {
 }
 
 static ENUM_DEFS: &[u8] = include_bytes!(proto_def_path!("proto_enums.data"));
+static ENUM_NAME_DEFS: &[u8] = include_bytes!(proto_def_path!("proto_enum_names.data"));
 static MSG_DEFS: &[u8] = include_bytes!(proto_def_path!("proto_msgs.data"));
-static NAME_DEFS: &[u8] = include_bytes!(proto_def_path!("proto_names.data"));
+static MSG_NAME_DEFS: &[u8] = include_bytes!(proto_def_path!("proto_msg_names.data"));
 static WIRE_DEFS: &[u8] = include_bytes!(proto_def_path!("proto_wire.data"));
 
 pub fn find_name_by_msg_offset(msg_offset: u16) -> Option<u16> {
     let name_defs: &[NameDef] = unsafe {
         slice::from_raw_parts(
-            NAME_DEFS.as_ptr().cast(),
-            NAME_DEFS.len() / mem::size_of::<NameDef>(),
+            MSG_NAME_DEFS.as_ptr().cast(),
+            MSG_NAME_DEFS.len() / mem::size_of::<NameDef>(),
         )
     };
     name_defs
@@ -133,12 +144,9 @@ pub fn find_name_by_msg_offset(msg_offset: u16) -> Option<u16> {
         .map(|def| def.msg_name)
 }
 
-fn find_msg_offset_by_name(msg_name: u16) -> Option<u16> {
+fn find_msg_offset_by_name(msg_name: u16, defs: &'static [u8]) -> Option<u16> {
     let name_defs: &[NameDef] = unsafe {
-        slice::from_raw_parts(
-            NAME_DEFS.as_ptr().cast(),
-            NAME_DEFS.len() / mem::size_of::<NameDef>(),
-        )
+        slice::from_raw_parts(defs.as_ptr().cast(), defs.len() / mem::size_of::<NameDef>())
     };
     name_defs
         .binary_search_by_key(&msg_name, |def| def.msg_name)
