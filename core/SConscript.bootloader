@@ -13,6 +13,7 @@ UI_DEBUG_OVERLAY = ARGUMENTS.get('UI_DEBUG_OVERLAY', '0') == '1'
 
 FEATURES_WANTED = [
     "ble",
+    "bootheader",
     "consumption_mask",
     "display",
     "dma2d",
@@ -121,7 +122,6 @@ env = Environment(
 FEATURES_AVAILABLE = models.configure_board(TREZOR_MODEL, HW_REVISION, FEATURES_WANTED, env, CPPDEFINES_HAL, SOURCE_HAL, PATH_HAL)
 
 SOURCE_BOOTLOADER = [
-    'embed/projects/bootloader/header.S',
     'embed/projects/bootloader/bootui.c',
     'embed/projects/bootloader/main.c',
     'embed/projects/bootloader/antiglitch.c',
@@ -142,6 +142,16 @@ SOURCE_BOOTLOADER = [
     'embed/projects/bootloader/protob/pb/messages.pb.c',
     'embed/projects/bootloader/version_check.c',
 ]
+
+if "bootheader" in FEATURES_AVAILABLE:
+    SOURCE_BOOTLOADER += [
+        'embed/projects/bootloader/header_pq.S',
+    ]
+else:
+    SOURCE_BOOTLOADER += [
+        'embed/projects/bootloader/header.S',
+    ]
+
 
 if 'optiga' in FEATURES_AVAILABLE:
     SOURCE_BOOTLOADER += [

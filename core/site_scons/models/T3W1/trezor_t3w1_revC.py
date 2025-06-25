@@ -54,6 +54,11 @@ def configure(
         ("TERMINAL_Y_PADDING", "12"),
     ]
 
+    if "bootheader" in features_wanted:
+        sources += ["embed/util/image/bootheader.c"]
+        defines += [("USE_BOOTHEADER", "1")]
+        features_available.append("bootheader")
+
     if "display" in features_wanted:
         sources += [
             "embed/io/display/ltdc_dsi/display_driver.c",

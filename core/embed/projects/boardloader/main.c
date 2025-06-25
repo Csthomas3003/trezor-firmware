@@ -32,6 +32,10 @@
 #include <util/option_bytes.h>
 #include <util/rsod.h>
 
+#ifdef USE_BOOTHEADER
+#include <util/bootheader.h>
+#endif
+
 #ifdef USE_PMIC
 #include <sys/pmic.h>
 #endif
@@ -106,6 +110,36 @@ board_capabilities_t capabilities
         .terminator_tag = TAG_TERMINATOR,
         .terminator_length = 0};
 
+#ifdef USE_BOOTHEADER
+static inline void verify_bootloader_signature(void) {
+  ensure(verify_bootheader(), "invalid bootloader pq signature");
+}
+
+#else
+static inline void verify_bootloader_signature(void) {
+  const image_header *hdr = read_image_header(
+      (const uint8_t *)BOOTLOADER_START, BOOTLOADER_IMAGE_MAGIC,
+      flash_area_get_size(&BOOTLOADER_AREA));
+
+  ensure(hdr == (const image_header *)BOOTLOADER_START ? sectrue : secfalse,
+         "invalid bootloader header");
+
+  ensure(check_bootloader_header_sig(hdr), "invalid bootloader signature");
+
+  ensure(check_image_model(hdr), "incompatible bootloader model");
+
+  ensure(check_image_contents(hdr, IMAGE_HEADER_SIZE, &BOOTLOADER_AREA),
+         "invalid bootloader hash");
+
+  uint8_t bld_min_version = get_bootloader_min_version();
+  ensure((hdr->monotonic >= bld_min_version) * sectrue,
+         "BOOTLOADER DOWNGRADED");
+  // Write the bootloader version to the secret area.
+  // This includes the version of bootloader potentially updated from SD card.
+  write_bootloader_min_version(hdr->monotonic);
+}
+#endif
+
 int main(void) {
   system_init(&rsod_panic_handler);
 
@@ -127,30 +161,11 @@ int main(void) {
   sd_update_check_and_update();
 #endif
 
-  const image_header *hdr = read_image_header(
-      (const uint8_t *)BOOTLOADER_START, BOOTLOADER_IMAGE_MAGIC,
-      flash_area_get_size(&BOOTLOADER_AREA));
-
-  ensure(hdr == (const image_header *)BOOTLOADER_START ? sectrue : secfalse,
-         "invalid bootloader header");
-
-  ensure(check_bootloader_header_sig(hdr), "invalid bootloader signature");
-
-  ensure(check_image_contents(hdr, IMAGE_HEADER_SIZE, &BOOTLOADER_AREA),
-         "invalid bootloader hash");
-
-  uint8_t bld_min_version = get_bootloader_min_version();
-  ensure((hdr->monotonic >= bld_min_version) * sectrue,
-         "BOOTLOADER DOWNGRADED");
-  // Write the bootloader version to the secret area.
-  // This includes the version of bootloader potentially updated from SD card.
-  write_bootloader_min_version(hdr->monotonic);
+  verify_bootloader_signature();
 
   drivers_deinit();
-
   system_deinit();
 
-  // g_boot_command is preserved on STM32U5
   jump_to_next_stage(IMAGE_CODE_ALIGN(BOOTLOADER_START + IMAGE_HEADER_SIZE));
 
   return 0;
