@@ -86,6 +86,11 @@ typedef struct {
   size_t secmon_code_processed;  // size of the processed secmon code
   uint8_t expected_secmon_hash[IMAGE_HASH_DIGEST_LENGTH];  // expected hash of
                                                            // the secmon code
+  // todo should be IMAGE_HASH_CTX, but due to limitations of the hash_processor
+  //  driver implementation, we can't run two hash calculations in parallel so
+  //  temporarily we use SW hashing for secmon code during update.
+  //  As secmon is only used on U5 MCUs where also SHA256is used for image
+  //  hashes, this works, but should be fixed by improving the hash_processor
   SHA256_CTX secmon_hash_ctx;
 #endif
 } firmware_update_ctx_t;
@@ -453,6 +458,7 @@ static upload_status_t process_msg_FirmwareUpload(protob_io_t *iface,
   // validate secmon code hash
   if (ctx->secmon_code_size > 0) {
     if (ctx->secmon_code_processed == 0) {
+      // todo SW SHA256, see comment in firmware_update_ctx_t
       sha256_Init(&ctx->secmon_hash_ctx);
     }
 
