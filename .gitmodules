@@ -39,3 +39,7 @@
 [submodule "vendor/pqm4"]
 	path = vendor/pqm4
 	url = https://github.com/mupq/pqm4
+[submodule "vendor/sphincsplus"]
+	path = vendor/sphincsplus
+	url = https://github.com/sphincs/sphincsplus/
+	branch = consistent-basew
