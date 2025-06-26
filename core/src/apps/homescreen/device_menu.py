@@ -58,6 +58,7 @@ async def handle_device_menu() -> None:
             auto_lock_delay=auto_lock_delay,
         ),
         "device_menu",
+        raise_on_cancel=None,
     )
 
     if menu_result is DeviceMenuResult.DevicePair:
@@ -91,5 +92,8 @@ async def handle_device_menu() -> None:
             await unpair(BleUnpair(all=False))  # FIXME we can only unpair current
         else:
             raise RuntimeError(f"Unknown menu {result_type}, {index}")
+    elif menu_result is trezorui_api.CANCELLED:
+        # user cancelled the device menu
+        return
     else:
         raise RuntimeError(f"Unknown menu {menu_result}")
