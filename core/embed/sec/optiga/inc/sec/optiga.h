@@ -27,6 +27,7 @@
 
 #define OPTIGA_DEVICE_CERT_INDEX 1
 #define OPTIGA_DEVICE_ECC_KEY_INDEX 0
+#define OPTIGA_FIDO_ECC_KEY_INDEX 2
 
 typedef enum _optiga_pin_result {
   OPTIGA_PIN_SUCCESS = 0,       // The operation completed successfully.
