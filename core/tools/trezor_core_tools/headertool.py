@@ -187,9 +187,10 @@ def cli(
     elif dry_run:
         echo("Not saving changes", err=True)
     else:
-        firmware_file.seek(0)
-        firmware_file.truncate(0)
-        firmware_file.write(updated_data)
+        #firmware_file.seek(0)
+        #firmware_file.truncate(0)
+        #firmware_file.write(updated_data)
+        pass
 
 
 if __name__ == "__main__":

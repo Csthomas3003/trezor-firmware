@@ -23,9 +23,11 @@ import click
 import construct as c
 from construct_classes import Struct
 from typing_extensions import Protocol, Self, runtime_checkable
+from slhdsa import sha2_128s, SecretKey, PublicKey
 
 from .. import cosi, firmware
 from ..firmware import models as fw_models
+
 
 SYM_OK = click.style("\u2714", fg="green")
 SYM_FAIL = click.style("\u274c", fg="red")
@@ -391,6 +393,50 @@ class BootloaderImage(firmware.FirmwareImage, CosiSignedMixin):
         return self.get_model_keys(dev_keys).boardloader_keys
 
 
+class BootloaderV2Image(firmware.BootableImage):
+    NAME: t.ClassVar[str] = "bootloader"
+    DEV_KEYS = _make_dev_keys(b"\x41", b"\x42")
+
+    def signature_present(self) -> bool:
+        return any(not all_zero(sig) for sig in self.header.signatures)
+
+    #def insert_signature(self, signature: bytes, sigmask: int) -> None:
+    #    self.get_header().signature[0] = signature
+    #    self.get_header().sigmask = sigmask
+
+    def get_header(self) -> CosiSignatureHeaderProto:
+        return self.header
+
+    def get_model_keys(self, dev_keys: bool) -> fw_models.ModelKeys:
+        hw_model = self.get_header().hw_model
+        model = fw_models.Model.from_hw_model(hw_model)
+        return model.model_keys(dev_keys)
+
+    def format(self, verbose: bool = False) -> str:
+        return "FORMAT NOT IMPLEMENTED"
+        '''
+        return format_header(
+            self.header,
+            self.code_hashes(),
+            self.digest(),
+            _check_signature_any(self),
+        )
+        '''
+
+    def verify(self, dev_keys: bool = False) -> None:
+
+        public_keys = self.public_keys(dev_keys)
+        digest = self.digest()
+
+        for idx, key in enumerate(self.public_keys(dev_keys)):
+            key = PublicKey.from_digest(key, sha2_128s)
+            if not key.verify(digest, self.header.signatures[idx]):
+                raise firmware.InvalidSignatureError("Invalid bootloader signature")
+
+    def public_keys(self, dev_keys: bool = False) -> t.Sequence[bytes]:
+        return self.get_model_keys(dev_keys).boardloader_keys
+
+
 class LegacyFirmware(firmware.LegacyFirmware):
     NAME: t.ClassVar[str] = "legacy_firmware_v1"
 
@@ -478,6 +524,11 @@ class LegacyV2Firmware(firmware.LegacyV2Firmware):
 
 
 def parse_image(image: bytes) -> SignableImageProto:
+    try:
+        return BootloaderV2Image.parse(image)
+    except c.ConstructError:
+        pass
+
     try:
         return VendorFirmware.parse(image)
     except c.ConstructError:

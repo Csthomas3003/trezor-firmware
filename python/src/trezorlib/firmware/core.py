@@ -33,13 +33,15 @@ __all__ = [
     "FirmwareHeader",
     "FirmwareImage",
     "VendorFirmware",
+    "BootHeader",
+    "BootableImage",
 ]
 
 
 class HeaderType(Enum):
     FIRMWARE = b"TRZF"
     BOOTLOADER = b"TRZB"
-
+    BOOTLOADER_V2 = b"TRZQ"
 
 class FirmwareHeader(Struct):
     magic: HeaderType
@@ -211,3 +213,127 @@ class VendorFirmware(Struct):
 
     def model(self) -> Model | None:
         return self.firmware.model()
+
+class BootHeader(Struct):
+    magic: HeaderType
+    hw_model: Model | bytes
+    hw_revision: int
+    version: tuple[int, int, int, int]
+    fix_version: tuple[int, int, int, int]
+    monotonic: int
+    header_len: int
+    code_length: int
+
+    _signed_len: int
+
+    merkle_path_len: int
+    merkle_path: list[bytes]
+    signatures: list[bytes]
+
+    # fmt: off
+    SUBCON = c.Struct(
+        "_start_offset" / c.Tell,
+        "magic" / EnumAdapter(c.Bytes(4), HeaderType),
+        "hw_model" / EnumAdapter(c.Bytes(4), Model),
+        "hw_revision" / c.Int32ul,
+        "version" / TupleAdapter(c.Int8ul, c.Int8ul, c.Int8ul, c.Int8ul),
+        "fix_version" / TupleAdapter(c.Int8ul, c.Int8ul, c.Int8ul, c.Int8ul),
+        "monotonic" / c.Int32ul,
+        "header_len" / c.Int32ul,
+        "code_length" / c.Rebuild(
+            c.Int32ul,
+            lambda this:
+                len(this._.code) if "code" in this._
+                else (this.code_length or 0)
+        ),
+        "_reserved" / c.Padding(32),
+        "_signed_len" / c.Tell,
+
+        "merkle_path_len" / c.Int32ul,
+        "merkle_path" / c.Bytes(32)[16],
+        "_reserved" / c.Padding(60),
+        "signatures" / c.Bytes(7856)[2],
+
+        "_reserved" / c.Padding(32),
+
+        "_end_offset" / c.Tell,
+
+        "_rebuild_header_len" / c.If(
+            c.this.version[0] > 1,
+            c.Pointer(
+                c.this._start_offset + 4,
+                c.Rebuild(c.Int32ul, c.this._end_offset - c.this._start_offset)
+            ),
+        ),
+    )
+    # fmt: on
+
+class BootableImage(Struct):
+    """Raw firmware image.
+
+    Consists of boot header and code block.
+    This is the expected format of the bootloader image with pq signature for
+    Trezor core models.
+    """
+
+    header: BootHeader = subcon(BootHeader)
+    _header_end: int
+    _code_offset: int
+    code: bytes
+
+    SUBCON = c.Struct(
+        "header" / BootHeader.SUBCON,
+        "_header_end" / c.Tell,
+        "_code_offset" / c.Tell,
+        "code" / c.Bytes(c.this.header.code_length),
+        c.Terminated,
+    )
+
+    def get_hash_params(self) -> util.FirmwareHashParameters:
+        return Model.from_hw_model(self.header.hw_model).hash_params()
+
+    '''
+    def code_hashes(self) -> list[bytes]:
+        """Calculate hashes of chunks of `code`.
+
+        Assume that the first `code_offset` bytes of `code` are taken up by the header.
+        """
+        hashes = []
+
+        hash_params = self.get_hash_params()
+
+        # End offset for each chunk. Normally this would be (i+1)*chunk_size for i-th chunk,
+        # but the first chunk is shorter by code_offset, so all end offsets are shifted.
+        ends = [(i + 1) * hash_params.chunk_size - self._code_offset for i in range(16)]
+        start = 0
+        for end in ends:
+            chunk = self.code[start:end]
+            # padding for last non-empty chunk
+            if hash_params.padding_byte is not None and start < len(self.code) < end:
+                chunk += hash_params.padding_byte[0:1] * (end - start - len(chunk))
+
+            if not chunk:
+                hashes.append(b"\0" * 32)
+            else:
+                hashes.append(hash_params.hash_function(chunk).digest())
+
+            start = end
+
+        return hashes
+
+    def validate_code_hashes(self) -> None:
+        if self.code_hashes() != self.header.hashes:
+            raise util.FirmwareIntegrityError("Invalid firmware data.")
+    '''
+
+    def digest(self) -> bytes:
+        hash_params = self.get_hash_params()
+        # Hash the signed header and code
+        data = self.header.build()[:self.header._signed_len]
+        data += self.code
+        return hash_params.hash_function(data).digest()
+
+    def model(self) -> Model | None:
+        if isinstance(self.header.hw_model, Model):
+            return self.header.hw_model
+        return None
