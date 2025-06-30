@@ -107,6 +107,27 @@ pm_status_t pm_init(bool inherit_state) {
   irq_key_t irq_key = irq_lock();
 
   if (recovery_ok) {
+#ifdef USE_RTC
+
+    // RTC compensation should happen only during initialization in bootloader
+    if (!inherit_state) {
+      // Get RTC timestamp and compare it with the timestamp from recovery data
+      // to estimate time off and compensate self-discharge of the battery.
+      uint32_t rtc_timestamp;
+      if (recovery.last_capture_timestamp != 0 &&
+          rtc_get_timestamp(&rtc_timestamp)) {
+        // If the RTC timestamp is older than the last captured timestamp,
+        // we will not use it.
+        if (rtc_timestamp >= recovery.last_capture_timestamp) {
+          pm_compensate_fuel_gauge(
+              &recovery.soc, rtc_timestamp - recovery.last_capture_timestamp,
+              PM_SELF_DISG_RATE_HIBERATION_MAH, 25.0f);
+        }
+      }
+    }
+
+#endif
+
     fuel_gauge_set_soc(&drv->fuel_gauge, recovery.soc, recovery.P);
   } else {
     pm_battery_initial_soc_guess();
@@ -442,6 +463,13 @@ pm_status_t pm_store_data_to_backup_ram() {
   // Power manager state
   recovery.bat_critical = drv->battery_critical;
   recovery.bootloader_exit_state = drv->state;
+
+#ifdef USE_RTC
+  if (!rtc_get_timestamp(&recovery.last_capture_timestamp)) {
+    // If RTC timestamp cannot be obtained, set it to 0
+    recovery.last_capture_timestamp = 0;
+  }
+#endif
 
   irq_unlock(irq_key);
 
