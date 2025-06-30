@@ -44,12 +44,13 @@ secbool verify_bootheader(void) {
 
   const bootheader_t *bootheader = (const bootheader_t *)BOOTHEADER_START;
 
-  const uint8_t* msg = (const uint8_t*) BOOTLOADER_START;
+  const uint8_t *msg = (const uint8_t *)BOOTLOADER_START;
   size_t msg_size = 1024;
 
   mpu_mode_t mpu_mode = mpu_reconfig(MPU_MODE_BOOTHEADER);
-  int result = crypto_sign_verify(bootheader->signature1, PQ_SIGNATURE_LEN,
-                                  msg, msg_size, pk);
+  int result =
+      crypto_sign_verify(bootheader->uns.signature1,
+                         BOOTHEADER_PQ_SIGNATURE_LEN, msg, msg_size, pk);
 
   mpu_restore(mpu_mode);
 

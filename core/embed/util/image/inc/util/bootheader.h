@@ -21,26 +21,51 @@
 
 #include <trezor_types.h>
 
-#define PQ_SIGNATURE_LEN 7856
+#define BOOTHEADER_PQ_SIGNATURE_LEN 7856
+#define BOOTHEADER_MERKLE_PATH_MAX_LEN 16
 
 /**
- * Signature/upgrade block footer, reserved for the upgrade process
- * and not included in the signing process.
+ * Signed part of the boot header
+ */
+typedef struct {
+  uint32_t magic;        // 'TRZQ'
+  uint32_t hw_model;     // Hardware model, e.g. 'T3W1'
+  uint32_t hw_revision;  // Hardware revision, e.g. 1
+  uint32_t version;
+  uint32_t fix_version;
+  uint32_t monotonic_version;
+  uint32_t header_size;  // Size of the header in bytes
+  uint32_t code_size;    // Size of the code in bytes
+  uint32_t reserved[8];
+} __attribute__((packed)) bootheader_signed_t;
+
+/**
+ * Unsigned part of the boot header
+ */
+typedef struct {
+  uint32_t merkle_path_len;
+  uint8_t merkle_path[32][BOOTHEADER_MERKLE_PATH_MAX_LEN];
+  uint8_t reserved[60];
+  uint8_t signature1[BOOTHEADER_PQ_SIGNATURE_LEN];
+  uint8_t signature2[BOOTHEADER_PQ_SIGNATURE_LEN];
+} __attribute__((packed)) bootheader_unsigned_t;
+
+/**
+ * Dynamic part of the boot header filled by the bootloader at runtime.
  */
 typedef struct {
   // Pointer to the bootloader image in flash
   void* bootloader_image;
-  uint8_t reserved[28];
-} bootheader_dyn_t;
+  uint32_t reserved[7];
+} __attribute__((packed)) bootheader_dynamic_t;
 
 /**
  * Structure of boot header
  */
 typedef struct {
-  uint8_t reserved[640];
-  uint8_t signature1[PQ_SIGNATURE_LEN];
-  uint8_t signature2[PQ_SIGNATURE_LEN];
-  bootheader_dyn_t dyn;
-} bootheader_t;
+  bootheader_signed_t sig;
+  bootheader_unsigned_t uns;
+  bootheader_dynamic_t dyn;
+} __attribute__((packed)) bootheader_t;
 
 secbool verify_bootheader(void);
